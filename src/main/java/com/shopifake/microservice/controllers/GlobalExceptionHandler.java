@@ -1,5 +1,6 @@
 package com.shopifake.microservice.controllers;
 
+import com.shopifake.microservice.annotation.Generated;
 import com.shopifake.microservice.dtos.ErrorResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -19,6 +20,7 @@ import java.util.Map;
  */
 @RestControllerAdvice
 @Slf4j
+@Generated("exception-handler")
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

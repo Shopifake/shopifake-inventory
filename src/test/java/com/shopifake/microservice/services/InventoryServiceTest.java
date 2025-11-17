@@ -2,6 +2,7 @@ package com.shopifake.microservice.services;
 
 import com.shopifake.microservice.dtos.AdjustInventoryRequest;
 import com.shopifake.microservice.dtos.CreateInventoryRequest;
+import com.shopifake.microservice.dtos.InventoryResponse;
 import com.shopifake.microservice.entities.InventoryItem;
 import com.shopifake.microservice.entities.InventoryStatus;
 import com.shopifake.microservice.repositories.InventoryRepository;
@@ -15,6 +16,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -102,6 +104,84 @@ class InventoryServiceTest {
                 () -> inventoryService.adjustInventory(item.getProductId(), request));
 
         assertThat(exception.getMessage()).contains("negative quantity");
+    }
+
+    @Test
+    @DisplayName("Should return inventory by product id")
+    void shouldGetInventory() {
+        InventoryItem item = InventoryItem.builder()
+                .id(UUID.randomUUID())
+                .productId(createRequest.getProductId())
+                .availableQuantity(5)
+                .status(InventoryStatus.IN_STOCK)
+                .createdAt(LocalDateTime.now())
+                .updatedAt(LocalDateTime.now())
+                .build();
+        when(inventoryRepository.findByProductId(item.getProductId())).thenReturn(Optional.of(item));
+
+        InventoryResponse response = inventoryService.getInventory(item.getProductId());
+
+        assertThat(response.getProductId()).isEqualTo(item.getProductId());
+        assertThat(response.getAvailableQuantity()).isEqualTo(5);
+    }
+
+    @Test
+    @DisplayName("Should list inventory by status")
+    void shouldListInventoryByStatus() {
+        InventoryItem item = InventoryItem.builder()
+                .id(UUID.randomUUID())
+                .productId(createRequest.getProductId())
+                .availableQuantity(0)
+                .status(InventoryStatus.OUT_OF_STOCK)
+                .createdAt(LocalDateTime.now())
+                .updatedAt(LocalDateTime.now())
+                .build();
+        when(inventoryRepository.findByStatus(InventoryStatus.OUT_OF_STOCK))
+                .thenReturn(List.of(item));
+
+        List<InventoryResponse> responses = inventoryService.listInventory("OUT_OF_STOCK");
+
+        assertThat(responses).hasSize(1);
+        assertThat(responses.get(0).getStatus()).isEqualTo(InventoryStatus.OUT_OF_STOCK);
+    }
+
+    @Test
+    @DisplayName("Should delete inventory when present")
+    void shouldDeleteInventory() {
+        InventoryItem item = InventoryItem.builder()
+                .id(UUID.randomUUID())
+                .productId(createRequest.getProductId())
+                .availableQuantity(2)
+                .status(InventoryStatus.IN_STOCK)
+                .build();
+        when(inventoryRepository.findByProductId(item.getProductId())).thenReturn(Optional.of(item));
+
+        inventoryService.deleteInventory(item.getProductId());
+
+        verify(inventoryRepository).deleteById(item.getId());
+    }
+
+    @Test
+    @DisplayName("Should increase inventory and set status to IN_STOCK")
+    void shouldIncreaseInventory() {
+        InventoryItem item = InventoryItem.builder()
+                .id(UUID.randomUUID())
+                .productId(createRequest.getProductId())
+                .availableQuantity(0)
+                .status(InventoryStatus.OUT_OF_STOCK)
+                .build();
+        when(inventoryRepository.findByProductId(item.getProductId())).thenReturn(Optional.of(item));
+        when(inventoryRepository.save(any(InventoryItem.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        AdjustInventoryRequest request = AdjustInventoryRequest.builder()
+                .quantityDelta(5)
+                .reason("Replenishment")
+                .build();
+
+        InventoryResponse response = inventoryService.adjustInventory(item.getProductId(), request);
+
+        assertThat(response.getAvailableQuantity()).isEqualTo(5);
+        assertThat(response.getStatus()).isEqualTo(InventoryStatus.IN_STOCK);
     }
 }
 
