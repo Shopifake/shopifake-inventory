@@ -34,10 +34,13 @@ management:
   endpoint:
     health:
       show-details: always
-  metrics:
-    export:
-      otlp:
+      probes:
+        enabled: true
+  otlp:
+    metrics:
+      export:
         url: ${OTLP_METRICS_URL}
+        enabled: true
 logging:
   level:
     root: WARN
