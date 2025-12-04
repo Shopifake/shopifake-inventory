@@ -55,7 +55,7 @@ class InventoryControllerTest {
     }
 
     @Test
-    @DisplayName("POST /api/inventory creates inventory")
+    @DisplayName("POST / creates inventory")
     void shouldCreateInventory() throws Exception {
         InventoryResponse response = sampleResponse();
         when(inventoryService.createInventory(any(CreateInventoryRequest.class))).thenReturn(response);
@@ -65,7 +65,7 @@ class InventoryControllerTest {
                 .initialQuantity(5)
                 .build();
 
-        mockMvc.perform(post("/api/inventory")
+        mockMvc.perform(post("/")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
@@ -74,30 +74,30 @@ class InventoryControllerTest {
     }
 
     @Test
-    @DisplayName("GET /api/inventory/{productId} returns inventory")
+    @DisplayName("GET /{productId} returns inventory")
     void shouldGetInventory() throws Exception {
         InventoryResponse response = sampleResponse();
         when(inventoryService.getInventory(response.getProductId())).thenReturn(response);
 
-        mockMvc.perform(get("/api/inventory/{productId}", response.getProductId()))
+        mockMvc.perform(get("/{productId}", response.getProductId()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("IN_STOCK"));
     }
 
     @Test
-    @DisplayName("GET /api/inventory lists by status")
+    @DisplayName("GET / lists by status")
     void shouldListInventory() throws Exception {
         InventoryResponse response = sampleResponse();
         when(inventoryService.listInventory("IN_STOCK")).thenReturn(List.of(response));
 
-        mockMvc.perform(get("/api/inventory").param("status", "IN_STOCK"))
+        mockMvc.perform(get("/").param("status", "IN_STOCK"))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$[0].status").value("IN_STOCK"));
     }
 
     @Test
-    @DisplayName("PATCH /api/inventory/{productId}/adjust updates quantity")
+    @DisplayName("PATCH /{productId}/adjust updates quantity")
     void shouldAdjustInventory() throws Exception {
         InventoryResponse response = sampleResponse();
         when(inventoryService.adjustInventory(eq(response.getProductId()), any(AdjustInventoryRequest.class)))
@@ -108,7 +108,7 @@ class InventoryControllerTest {
                 .reason("Manual adjustment")
                 .build();
 
-        mockMvc.perform(patch("/api/inventory/{productId}/adjust", response.getProductId())
+        mockMvc.perform(patch("/{productId}/adjust", response.getProductId())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
@@ -116,12 +116,12 @@ class InventoryControllerTest {
     }
 
     @Test
-    @DisplayName("DELETE /api/inventory/{productId} removes record")
+    @DisplayName("DELETE /{productId} removes record")
     void shouldDeleteInventory() throws Exception {
         UUID productId = UUID.randomUUID();
         doNothing().when(inventoryService).deleteInventory(productId);
 
-        mockMvc.perform(delete("/api/inventory/{productId}", productId))
+        mockMvc.perform(delete("/{productId}", productId))
                 .andExpect(status().isNoContent());
     }
 }

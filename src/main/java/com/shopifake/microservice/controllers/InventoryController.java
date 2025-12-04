@@ -27,7 +27,7 @@ import java.util.UUID;
  * Inventory REST endpoints.
  */
 @RestController
-@RequestMapping("/api/inventory")
+@RequestMapping("/")
 @RequiredArgsConstructor
 @Tag(name = "Inventory")
 public class InventoryController {
